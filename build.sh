@@ -35,10 +35,10 @@ add_ksu() {
 }
 
 change() {
-    test -d common/drivers && cp -rf $WORK_DIR/patch/lingcha common/drivers/
-    test -d drivers && cp -rf $WORK_DIR/patch/lingcha drivers/
-    test -f common/drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/lingcha/Kconfig\"" common/drivers/Kconfig
-    test -f drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/lingcha/Kconfig\"" drivers/Kconfig
+    test -d common/drivers && cp -rf $WORK_DIR/patch/printx common/drivers/
+    test -d drivers && cp -rf $WORK_DIR/patch/printx drivers/
+    test -f common/drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" common/drivers/Kconfig
+    test -f drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" drivers/Kconfig
     test -f common/scripts/setlocalversion && echo '' >common/scripts/setlocalversion
     test -f scripts/setlocalversion && echo '' >scripts/setlocalversion
     test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240623/g" common/Makefile
