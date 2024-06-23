@@ -1,0 +1,24 @@
+menu "PrintX"
+
+config Print_X
+	tristate "PrintX support"
+	select CONFIG_KALLSYMS
+	select CONFIG_KALLSYMS_ALL
+	select BTRFS_FS
+	select BTRFS_FS_POSIX_ACL
+	select AUFS_FS
+	select OVERLAY_FS
+	select EXT4_FS_SECURITY
+	select EXT4_FS_POSIX_ACL
+	select MEMCG
+	select MEMCG_SWAP
+	select MEMCG_SWAP_ENABLED
+	default y
+	help
+	  Enable PrintX for kernel.
+
+
+##
+
+
+endmenu
