@@ -81,5 +81,13 @@ build() {
 }
 
 build 12 5.10
-
+rm -rf out/${kernel}/abi*
+    rm -rf out/${kernel}/gki*
+    rm -rf out/${kernel}/kernel*
+    rm -rf out/${kernel}/modules*
+    rm -rf out/${kernel}/System*
+    rm -rf out/${kernel}/system*
+    rm -rf out/${kernel}/test*
+    rm -rf out/${kernel}/vmlinux*
+    rm -rf out/${kernel}/*.ko
 exit
