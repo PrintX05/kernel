@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Toolchain
         run: |
-          bash build.sh
+          bash build12-5.10.sh
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
