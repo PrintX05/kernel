@@ -1,4 +1,4 @@
-name: Build
+name: gki5.15
 
 on:
   workflow_dispatch:
