@@ -1,0 +1,19 @@
+name: Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  try_to_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          bash build12-5.10-KSU.sh
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel
+          path: out
+          compression-level: 9
