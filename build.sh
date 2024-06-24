@@ -59,7 +59,7 @@ build() {
     repo --version
     repo --trace sync -c -j$(($(getconf _NPROCESSORS_ONLN) * 2)) --no-tags
 
-    
+    add_ksu gki    
     change
 
     if [ -e build/build.sh ]; then
@@ -80,7 +80,7 @@ build() {
     rm -rf ${kernel}
 }
 
-build 12 5.10
+build 13 5.15
 rm -rf out/${kernel}/abi*
     rm -rf out/${kernel}/gki*
     rm -rf out/${kernel}/kernel*
