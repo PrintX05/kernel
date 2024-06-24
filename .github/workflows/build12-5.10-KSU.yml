@@ -1,4 +1,4 @@
-name: gki5.10
+name: gki5.10ksu
 
 on:
   workflow_dispatch:
