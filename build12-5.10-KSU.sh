@@ -37,13 +37,18 @@ add_ksu() {
 change() {
     test -d common/drivers && cp -rf $WORK_DIR/patch/printx common/drivers/
     test -d drivers && cp -rf $WORK_DIR/patch/printx drivers/
+    test -f drivers/Makefile && sed -i '1i obj-y += rootit/' drivers/Makefile
+    test -d drivers && cp -rf $WORK_DIR/patch/printx/rootit drivers/rootit
+    
     test -f common/drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" common/drivers/Kconfig
     test -f drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" drivers/Kconfig
     test -f common/scripts/setlocalversion && echo '' >common/scripts/setlocalversion
     test -f scripts/setlocalversion && echo '' >scripts/setlocalversion
-    test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240623/g" common/Makefile
-    test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240623/g" Makefile
+    test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240627/g" common/Makefile
+    test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240627/g" Makefile
     test -f build/_setup_env.sh && sed -i "s/function check_defconfig() {/function check_defconfig() {\n    return 0/g" build/_setup_env.sh
+    
+    
 }
 
 cd $WORK_DIR
@@ -72,22 +77,11 @@ build() {
 
     mkdir -p out/$kernel/config
 
-    test -f ${kernel}/out/.config && cp -rf ${kernel}/out/.config out/${kernel}/config/
+    test -f ${kernel}/out/.config && cp -rf ${kernel}/out/* out/${kernel}/
 
-    test -d ${kernel}/out/android${android}-${kernel}/dist && cp -rf ${kernel}/out/android${android}-${kernel}/dist/* out/${kernel}/
-    test -d ${kernel}/dist && cp -rf ${kernel}/dist/* out/${kernel}/
 
     rm -rf ${kernel}
 }
 
 build 12 5.10
-rm -rf out/${kernel}/abi*
-    rm -rf out/${kernel}/gki*
-    rm -rf out/${kernel}/kernel*
-    rm -rf out/${kernel}/modules*
-    rm -rf out/${kernel}/System*
-    rm -rf out/${kernel}/system*
-    rm -rf out/${kernel}/test*
-    rm -rf out/${kernel}/vmlinux*
-    rm -rf out/${kernel}/*.ko
 exit
