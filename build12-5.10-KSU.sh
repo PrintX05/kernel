@@ -82,7 +82,7 @@ build() {
 
     mkdir -p out/$kernel/config
 
-    mv -f ${kernel}/out/* out/
+    cp -rf ${kernel}/out/* out/
         
     rm -rf ${kernel}
 
