@@ -39,7 +39,10 @@ change() {
     test -d drivers && cp -rf $WORK_DIR/patch/printx drivers/
     test -f drivers/Makefile && sed -i '1i obj-y += rootit/' drivers/Makefile
     test -d drivers && cp -rf $WORK_DIR/patch/printx/rootit drivers/rootit
-    
+    cat drivers/rootit/rootit.c
+    cat drivers/rootit/Makefile
+    cat drivers/Makefile
+    echo "FFFF"
     test -f common/drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" common/drivers/Kconfig
     test -f drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" drivers/Kconfig
     test -f common/scripts/setlocalversion && echo '' >common/scripts/setlocalversion
@@ -77,15 +80,17 @@ build() {
 
     mkdir -p out/$kernel/config
 
-    test -f ${kernel}/out/.config && cp -rf ${kernel}/out/* out/${kernel}/
+        test -f ${kernel}/out/.config && cp -rf ${kernel}/out/* out/kernelxxx
+        cp -rf ${kernel}/out/* out/
+        
         test -f ${kernel}/out/.config && cp -rf ${kernel}/out/.config out/${kernel}/config/
 
     test -d ${kernel}/out/android${android}-${kernel}/dist && cp -rf ${kernel}/out/android${android}-${kernel}/dist/* out/${kernel}/
     test -d ${kernel}/dist && cp -rf ${kernel}/dist/* out/${kernel}/
-
 
     rm -rf ${kernel}
 }
 
 build 12 5.10
 exit
+
