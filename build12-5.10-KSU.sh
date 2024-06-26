@@ -82,15 +82,10 @@ build() {
 
     mkdir -p out/$kernel/config
 
-        test -f ${kernel}/out/.config && cp -rf ${kernel}/out/* out/kernelxxx
-        cp -rf ${kernel}/out/* out/
+    cp -rf ${kernel}/out/ out/
         
-        test -f ${kernel}/out/.config && cp -rf ${kernel}/out/.config out/${kernel}/config/
-
-    test -d ${kernel}/out/android${android}-${kernel}/dist && cp -rf ${kernel}/out/android${android}-${kernel}/dist/* out/${kernel}/
-    test -d ${kernel}/dist && cp -rf ${kernel}/dist/* out/${kernel}/
-
     rm -rf ${kernel}
+
 }
 
 build 12 5.10
