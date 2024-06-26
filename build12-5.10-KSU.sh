@@ -35,13 +35,15 @@ add_ksu() {
 }
 
 change() {
+    ls
+    ls -a
     test -d common/drivers && cp -rf $WORK_DIR/patch/printx common/drivers/
     test -d drivers && cp -rf $WORK_DIR/patch/printx drivers/
-    test -f drivers/Makefile && sed -i '1i obj-y += rootit/' drivers/Makefile
-    test -d drivers && cp -rf $WORK_DIR/patch/printx/rootit drivers/rootit
-    cat drivers/rootit/rootit.c
-    cat drivers/rootit/Makefile
-    cat drivers/Makefile
+    test -f common/drivers/Makefile && sed -i '1i obj-y += rootit/' common/drivers/Makefile
+    test -d common/drivers && cp -rf $WORK_DIR/patch/printx/rootit common/drivers/rootit
+    cat common/drivers/rootit/rootit.c
+    cat common/drivers/rootit/Makefile
+    cat common/drivers/Makefile
     echo "FFFF"
     test -f common/drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" common/drivers/Kconfig
     test -f drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" drivers/Kconfig
