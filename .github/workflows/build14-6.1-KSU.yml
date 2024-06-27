@@ -1,0 +1,19 @@
+name: gki6.1ksu
+
+on:
+  workflow_dispatch:
+
+jobs:
+  try_to_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          bash build14-6.1-KSU.sh
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel
+          path: out
+          compression-level: 9
