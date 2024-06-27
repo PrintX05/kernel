@@ -68,8 +68,7 @@ build() {
     repo init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-android${android}-${kernel}-lts --repo-rev=v2.16
     repo --version
     repo --trace sync -c -j$(($(getconf _NPROCESSORS_ONLN) * 2)) --no-tags
-
-    add_ksu gki    
+    curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
     change
 
     if [ -e build/build.sh ]; then
