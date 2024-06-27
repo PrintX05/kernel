@@ -81,13 +81,13 @@ build() {
     cd $WORK_DIR
 
     mkdir -p out/$kernel/config
-
-    mv -f ${kernel}/out/* out/
-        
+    rm -rf ${kernel}/out/android${android}-${kernel}/common/.thinlto-cache
+    ls ${kernel}/out/
+    echo "加载内核"
+    mv -f ${kernel}/out/* out/        
     rm -rf ${kernel}
 
 }
 
 build 12 5.10
 exit
-
