@@ -74,7 +74,7 @@ build() {
     if [ -e build/build.sh ]; then
         LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh
     else
-    tools/bazel build --config=fast //common:kernel_aarch64_dist
+    bazel build //common:kernel_aarch64_dist --config=gki_defconfig
     fi
 
     cd $WORK_DIR
