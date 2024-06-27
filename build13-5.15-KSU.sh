@@ -35,15 +35,25 @@ add_ksu() {
 }
 
 change() {
+    ls
+    ls -a
     test -d common/drivers && cp -rf $WORK_DIR/patch/printx common/drivers/
     test -d drivers && cp -rf $WORK_DIR/patch/printx drivers/
+    test -f common/drivers/Makefile && sed -i '1i obj-y += rootit/' common/drivers/Makefile
+    test -d common/drivers && cp -rf $WORK_DIR/patch/printx/rootit common/drivers/rootit
+    cat common/drivers/rootit/rootit.c
+    cat common/drivers/rootit/Makefile
+    cat common/drivers/Makefile
+    echo "FFFF"
     test -f common/drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" common/drivers/Kconfig
     test -f drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" drivers/Kconfig
     test -f common/scripts/setlocalversion && echo '' >common/scripts/setlocalversion
     test -f scripts/setlocalversion && echo '' >scripts/setlocalversion
-    test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-E-20240624/g" common/Makefile
-    test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-E-20240624/g" Makefile
+    test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240627/g" common/Makefile
+    test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240627/g" Makefile
     test -f build/_setup_env.sh && sed -i "s/function check_defconfig() {/function check_defconfig() {\n    return 0/g" build/_setup_env.sh
+    
+    
 }
 
 cd $WORK_DIR
@@ -71,23 +81,15 @@ build() {
     cd $WORK_DIR
 
     mkdir -p out/$kernel/config
-
-    test -f ${kernel}/out/.config && cp -rf ${kernel}/out/.config out/${kernel}/config/
-
-    test -d ${kernel}/out/android${android}-${kernel}/dist && cp -rf ${kernel}/out/android${android}-${kernel}/dist/* out/${kernel}/
-    test -d ${kernel}/dist && cp -rf ${kernel}/dist/* out/${kernel}/
-
+    rm -rf ${kernel}/out/android${android}-${kernel}/common/.thinlto-cache
+    rm -rf ${kernel}/out/android${android}-${kernel}/common/*vmlinux*
+    rm -rf ${kernel}/out/android${android}-${kernel}/common/*tmp* 
+    ls ${kernel}/out/
+    echo "加载内核"
+    mv -f ${kernel}/out/* out/        
     rm -rf ${kernel}
+
 }
 
 build 13 5.15
-rm -rf out/${kernel}/abi*
-    rm -rf out/${kernel}/gki*
-    rm -rf out/${kernel}/kernel*
-    rm -rf out/${kernel}/modules*
-    rm -rf out/${kernel}/System*
-    rm -rf out/${kernel}/system*
-    rm -rf out/${kernel}/test*
-    rm -rf out/${kernel}/vmlinux*
-    rm -rf out/${kernel}/*.ko
 exit
