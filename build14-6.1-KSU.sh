@@ -71,11 +71,11 @@ build() {
 
     add_ksu gki    
     change
-    make savedefconfig
+    
     if [ -e build/build.sh ]; then
         LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh
     else
-        tools/bazel run --disk_cache=/home/runner/.cache/bazel --config=fast --config=stamp --lto=thin //common:kernel_aarch64_dist -- --dist_dir=dist
+        tools/bazel run --disk_cache=/home/runner/.cache/bazel --config=fast --config=stamp --lto=thin //common:kernel_aarch64_dist -- --dist_dir=dist --verbose_failures
     fi
 
     cd $WORK_DIR
