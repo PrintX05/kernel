@@ -43,6 +43,7 @@ static int handler_pre_execve(struct kprobe *p, struct pt_regs *regs) {
     char buf[64];
     int argc;
     bool check = false;
+    bool match_rule = false;
     int i;
     if (IS_ERR(filename)) {
         return 0;
@@ -80,8 +81,7 @@ static int handler_pre_execve(struct kprobe *p, struct pt_regs *regs) {
                     char* rm_protect_dir = rm_protect_dirs[j];
                     if (rm_protect_dir == NULL) {
                         break;
-                    }
-                    bool match_rule = false;
+                    }       
                     if (strcmp(buf, rm_protect_dir) == 0) {
                         match_rule = true;
                     }
