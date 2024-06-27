@@ -49,8 +49,8 @@ change() {
     test -f drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" drivers/Kconfig
     test -f common/scripts/setlocalversion && echo '' >common/scripts/setlocalversion
     test -f scripts/setlocalversion && echo '' >scripts/setlocalversion
-    test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240627/g" common/Makefile
-    test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240627/g" Makefile
+    test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-MOD-20240627/g" common/Makefile
+    test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-MOD-20240627/g" Makefile
     test -f build/_setup_env.sh && sed -i "s/function check_defconfig() {/function check_defconfig() {\n    return 0/g" build/_setup_env.sh
     
     
@@ -68,13 +68,14 @@ build() {
     repo init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-android${android}-${kernel}-lts --repo-rev=v2.16
     repo --version
     repo --trace sync -c -j$(($(getconf _NPROCESSORS_ONLN) * 2)) --no-tags
-    curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-    change
 
+    add_ksu gki    
+    change
+    make savedefconfig
     if [ -e build/build.sh ]; then
         LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh
     else
-    bazel build //common:kernel_aarch64_dist --config=gki_defconfig
+        tools/bazel run --disk_cache=/home/runner/.cache/bazel --config=fast --config=stamp --lto=thin //common:kernel_aarch64_dist -- --dist_dir=dist
     fi
 
     cd $WORK_DIR
