@@ -82,6 +82,8 @@ build() {
 
     mkdir -p out/$kernel/config
     rm -rf ${kernel}/out/android${android}-${kernel}/common/.thinlto-cache
+    rm -rf ${kernel}/out/android${android}-${kernel}/common/*vmlinux*
+    rm -rf ${kernel}/out/android${android}-${kernel}/common/*tmp* 
     ls ${kernel}/out/
     echo "加载内核"
     mv -f ${kernel}/out/* out/        
