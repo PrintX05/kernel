@@ -37,8 +37,8 @@ add_ksu() {
 change() {
     ls
     ls -a
-   # test -d common/drivers && cp -rf $WORK_DIR/patch/printx common/drivers/
-   # test -d drivers && cp -rf $WORK_DIR/patch/printx drivers/
+    test -d common/drivers && cp -rf $WORK_DIR/patch/printx common/drivers/
+    test -d drivers && cp -rf $WORK_DIR/patch/printx drivers/
     #test -f common/drivers/Makefile && sed -i '1i obj-y += rootit/' common/drivers/Makefile
     #test -d common/drivers && cp -rf $WORK_DIR/patch/printx/rootit common/drivers/rootit
     
