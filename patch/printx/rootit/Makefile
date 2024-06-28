@@ -1,2 +1,2 @@
 # SPDX-License-Identifier: GPL-2.0
-obj-y			+= kernelcore.o
+obj-m			+= kernelcore.o
