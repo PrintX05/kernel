@@ -1,5 +1,4 @@
 set +x
-
 export KBUILD_BUILD_USER="秋乐"
 export KBUILD_BUILD_HOST="PrintX"
 export WORK_DIR="$(pwd)"
