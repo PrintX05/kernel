@@ -37,20 +37,18 @@ add_ksu() {
 change() {
     ls
     ls -a
-    test -d common/drivers && cp -rf $WORK_DIR/patch/printx common/drivers/
-    test -d drivers && cp -rf $WORK_DIR/patch/printx drivers/
-    test -f common/drivers/Makefile && sed -i '1i obj-y += rootit/' common/drivers/Makefile
-    test -d common/drivers && cp -rf $WORK_DIR/patch/printx/rootit common/drivers/rootit
-    cat common/drivers/rootit/rootit.c
-    cat common/drivers/rootit/Makefile
-    cat common/drivers/Makefile
+   # test -d common/drivers && cp -rf $WORK_DIR/patch/printx common/drivers/
+   # test -d drivers && cp -rf $WORK_DIR/patch/printx drivers/
+    #test -f common/drivers/Makefile && sed -i '1i obj-y += rootit/' common/drivers/Makefile
+    #test -d common/drivers && cp -rf $WORK_DIR/patch/printx/rootit common/drivers/rootit
+    
     echo "FFFF"
     test -f common/drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" common/drivers/Kconfig
     test -f drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" drivers/Kconfig
     test -f common/scripts/setlocalversion && echo '' >common/scripts/setlocalversion
     test -f scripts/setlocalversion && echo '' >scripts/setlocalversion
-    test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240627/g" common/Makefile
-    test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240627/g" Makefile
+    test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240628/g" common/Makefile
+    test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240628/g" Makefile
     setxx=$(find . -name "_setup_env.sh" -print -quit)
     echo "File path: $setxx"
     cat "$setxx"
