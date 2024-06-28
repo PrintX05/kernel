@@ -51,6 +51,9 @@ change() {
     test -f scripts/setlocalversion && echo '' >scripts/setlocalversion
     test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-MOD-20240627/g" common/Makefile
     test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-MOD-20240627/g" Makefile
+    setxx=$(find . -name "_setup_env.sh" -print -quit)
+echo "File path: $setxx"
+cat "$setxx"
     test -f build/_setup_env.sh && sed -i "s/function check_defconfig() {/function check_defconfig() {\n    return 0/g" build/_setup_env.sh
     
     
