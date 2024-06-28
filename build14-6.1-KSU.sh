@@ -49,12 +49,16 @@ change() {
     test -f drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" drivers/Kconfig
     test -f common/scripts/setlocalversion && echo '' >common/scripts/setlocalversion
     test -f scripts/setlocalversion && echo '' >scripts/setlocalversion
-    test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-MOD-20240627/g" common/Makefile
-    test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-MOD-20240627/g" Makefile
+    test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240627/g" common/Makefile
+    test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-20240627/g" Makefile
     setxx=$(find . -name "_setup_env.sh" -print -quit)
-echo "File path: $setxx"
-cat "$setxx"
-    test -f build/_setup_env.sh && sed -i "s/function check_defconfig() {/function check_defconfig() {\n    return 0/g" build/_setup_env.sh
+    echo "File path: $setxx"
+    cat "$setxx"
+    
+    sed -i "s/function check_defconfig() {/function check_defconfig() {\n    return 0/g" $setxx
+    
+    cat "$setxx"
+    
     
     
 }
@@ -72,7 +76,7 @@ build() {
     repo --version
     repo --trace sync -c -j$(($(getconf _NPROCESSORS_ONLN) * 2)) --no-tags
 
-    #add_ksu gki    
+    add_ksu gki    
     change
 
     if [ -e build/build.sh ]; then
