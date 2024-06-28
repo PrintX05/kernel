@@ -69,7 +69,7 @@ build() {
     repo --version
     repo --trace sync -c -j$(($(getconf _NPROCESSORS_ONLN) * 2)) --no-tags
 
-    add_ksu gki    
+    #add_ksu gki    
     change
 
     if [ -e build/build.sh ]; then
