@@ -21,11 +21,11 @@ jobs:
 
     - name: 验证目标仓库 URL
       run: |
-        echo "目标仓库: https://x-access-token:${{ secrets.PRINTX }}@github.com/PrintX05/kernel.git"
+        echo "目标仓库: https://x-access-token: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@github.com/PrintX05/kernel.git"
 
     - name: 添加目标仓库和同步分支
       run: |
-        git remote add target https://x-access-token:${{ secrets.PRINTX }}@github.com/PrintX05/kernel.git
+        git remote add target https://x-access-token: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@github.com/PrintX05/kernel.git
         git fetch target
         git checkout -B 5.10-lts origin/android12-5.10-lts
 
