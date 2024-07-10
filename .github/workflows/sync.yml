@@ -1,4 +1,4 @@
-name: 同步内核仓库
+name: sync
 
 on:
   workflow_dispatch: # 手动触发
