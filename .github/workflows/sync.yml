@@ -1,4 +1,4 @@
-name: sync
+name: 同步内核仓库
 
 on:
   workflow_dispatch: # 手动触发
@@ -20,15 +20,16 @@ jobs:
         git config --global user.email '3042627767@qq.com'
 
     - name: 验证目标仓库 URL
-      run: echo "目标仓库: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/PrintX05/kernel.git"
+      run: |
+        echo "目标仓库: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/PrintX05/kernel.git"
 
-    - name: 添加目标仓库
+    - name: 添加目标仓库和同步分支
       run: |
         git remote add target https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/PrintX05/kernel.git
         git fetch target
-        git checkout -b 5.10-lts || git checkout 5.10-lts
-        git reset --hard origin/android12-5.10-lts
+        git checkout -B 5.10-lts origin/android12-5.10-lts
 
-    - name: 推送更改到目标仓库
+    - name: 强制推送更改到目标仓库的 5.10-lts 分支
       run: |
+        git reset --hard origin/android12-5.10-lts
         git push target +HEAD:refs/heads/5.10-lts --force
