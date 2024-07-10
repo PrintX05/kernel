@@ -1,0 +1,31 @@
+name: Sync Kernel Repo
+
+on:
+  workflow_dispatch: # 手动触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the source repository
+      uses: actions/checkout@v2
+      with:
+        repository: aosp-mirror/kernel_common
+        ref: android12-5.10-lts
+
+    - name: Set up Git
+      run: |
+        git config --global user.name 'PrintX'
+        git config --global user.email '3042627767@qq.com'
+
+    - name: Add target repository
+      run: |
+        git remote add target https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/PrintX05/${{ github.repository }}.git
+        git fetch target
+        git checkout -b 5.10-lts || git checkout 5.10-lts
+        git reset --hard origin/android12-5.10-lts
+
+    - name: Push changes to target repository
+      run: |
+        git push target +HEAD:refs/heads/5.10-lts --force
