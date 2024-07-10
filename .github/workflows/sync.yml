@@ -32,4 +32,4 @@ jobs:
     - name: 强制推送更改到目标仓库的 5.10-lts 分支
       run: |
         git reset --hard origin/android12-5.10-lts
-        git push target +HEAD:refs/heads/5.10-lts --force
+        git push https://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@github.com/PrintX05/kernel.git +HEAD:refs/heads/5.10-lts --force
