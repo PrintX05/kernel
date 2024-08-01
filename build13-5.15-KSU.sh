@@ -49,8 +49,8 @@ change() {
     test -f drivers/Kconfig && sed -i "/endmenu/i\\source \"drivers/printx/Kconfig\"" drivers/Kconfig
     test -f common/scripts/setlocalversion && echo '' >common/scripts/setlocalversion
     test -f scripts/setlocalversion && echo '' >scripts/setlocalversion
-    test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-E-20240711/g" common/Makefile
-    test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-E-20240711/g" Makefile
+    test -f common/Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-E-20240801/g" common/Makefile
+    test -f Makefile && sed -i "s/EXTRAVERSION =/EXTRAVERSION = -PrintX-E-20240801/g" Makefile
     test -f build/_setup_env.sh && sed -i "s/function check_defconfig() {/function check_defconfig() {\n    return 0/g" build/_setup_env.sh
     
     
